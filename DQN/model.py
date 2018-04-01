@@ -18,11 +18,9 @@ class DQN:
     # 앞의 상태까지 고려하기 위함입니다.
     STATE_LEN = 4
 
-    def __init__(self, session, width, height, n_action):
+    def __init__(self, session, n_action):
         self.session = session
         self.n_action = n_action
-        self.width = width
-        self.height = height
         # 게임 플레이결과를 저장할 메모리
         self.memory = deque()
         # 현재 게임판의 상태
@@ -30,7 +28,7 @@ class DQN:
 
         # 게임의 상태를 입력받을 변수
         # [게임판의 가로 크기, 게임판의 세로 크기, 게임 상태의 갯수(현재+과거+과거..)]
-        self.input_X = tf.placeholder(tf.float32, [None, width, height, self.STATE_LEN])
+        self.input_X = tf.placeholder(tf.float32, [None, 1, 40, self.STATE_LEN]) #state => 1 x 40
         # 각각의 상태를 만들어낸 액션의 값들입니다. 0, 1, 2 ..
         self.input_A = tf.placeholder(tf.int64, [None])
         # 손실값을 계산하는데 사용할 입력값입니다. train 함수를 참고하세요.
@@ -44,6 +42,7 @@ class DQN:
         self.target_Q = self._build_network('target')
 
     def _build_network(self, name):
+        #todo Remove Convolution network
         with tf.variable_scope(name):
             model = tf.layers.conv2d(self.input_X, 32, [4, 4], padding='same', activation=tf.nn.relu)
             model = tf.layers.conv2d(model, 64, [2, 2], padding='same', activation=tf.nn.relu)
@@ -91,14 +90,14 @@ class DQN:
         # axis=2 는 input_X 의 값이 다음처럼 마지막 차원으로 쌓아올린 형태로 만들었기 때문입니다.
         # 이렇게 해야 컨볼루션 레이어를 손쉽게 이용할 수 있습니다.
         # self.input_X = tf.placeholder(tf.float32, [None, width, height, self.STATE_LEN])
-        self.state = np.stack(state, axis=2)
+        self.state = np.stack(state, axis=1)
 
     def remember(self, state, action, reward, terminal):
         # 학습데이터로 현재의 상태만이 아닌, 과거의 상태까지 고려하여 계산하도록 하였고,
         # 이 모델에서는 과거 3번 + 현재 = 총 4번의 상태를 계산하도록 하였으며,
         # 새로운 상태가 들어왔을 때, 가장 오래된 상태를 제거하고 새로운 상태를 넣습니다.
-        next_state = np.reshape(state, (self.width, self.height, 1))
-        next_state = np.append(self.state[:, :, 1:], next_state, axis=2)
+        next_state = np.reshape(state, (1, 39))
+        next_state = np.append(self.state[1:40, 1:], next_state, axis=1)
 
         # 플레이결과, 즉, 액션으로 얻어진 상태와 보상등을 메모리에 저장합니다.
         self.memory.append((self.state, next_state, action, reward, terminal))

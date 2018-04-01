@@ -8,7 +8,7 @@ from game import Game
 from model import DQN
 
 
-tf.app.flags.DEFINE_boolean("train", False, "학습모드. 게임을 화면에 보여주지 않습니다.")
+tf.app.flags.DEFINE_boolean("train", True, "학습모드. 게임을 화면에 보여주지 않습니다.")
 FLAGS = tf.app.flags.FLAGS
 
 # 최대 학습 횟수
@@ -20,7 +20,7 @@ TRAIN_INTERVAL = 4
 # 학습 데이터를 어느정도 쌓은 후, 일정 시간 이후에 학습을 시작하도록 합니다.
 OBSERVE = 100
 
-# action: 0: 좌, 1: 유지, 2: 우
+# action: 0: 매수, 1: 매각, 2: 유지
 NUM_ACTION = 3
 SCREEN_WIDTH = 6
 SCREEN_HEIGHT = 10
@@ -30,8 +30,8 @@ def train():
     print('뇌세포 깨우는 중..')
     sess = tf.Session()
 
-    game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, show_game=False)
-    brain = DQN(sess, SCREEN_WIDTH, SCREEN_HEIGHT, NUM_ACTION)
+    game = Game()
+    brain = DQN(sess, NUM_ACTION)
 
     rewards = tf.placeholder(tf.float32, [None])
     tf.summary.scalar('avg.reward/ep.', tf.reduce_mean(rewards))
@@ -56,8 +56,6 @@ def train():
         terminal = False
         total_reward = 0
 
-        # 게임을 초기화하고 현재 상태를 가져옵니다.
-        # 상태는 screen_width x screen_height 크기의 화면 구성입니다.
         state = game.reset()
         brain.init_state(state)
 
@@ -112,8 +110,8 @@ def replay():
     print('뇌세포 깨우는 중..')
     sess = tf.Session()
 
-    game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, show_game=True)
-    brain = DQN(sess, SCREEN_WIDTH, SCREEN_HEIGHT, NUM_ACTION)
+    game = Game()
+    brain = DQN(sess, NUM_ACTION)
 
     saver = tf.train.Saver()
     ckpt = tf.train.get_checkpoint_state('model')
