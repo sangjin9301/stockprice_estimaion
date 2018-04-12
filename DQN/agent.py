@@ -14,7 +14,7 @@ FLAGS = tf.app.flags.FLAGS
 # 최대 학습 횟수
 MAX_EPISODE = 10000
 # 1000번의 학습마다 한 번씩 타겟 네트웍을 업데이트합니다.
-TARGET_UPDATE_INTERVAL = 1000
+TARGET_UPDATE_INTERVAL = 100
 # 4 프레임마다 한 번씩 학습합니다.
 TRAIN_INTERVAL = 4
 # 학습 데이터를 어느정도 쌓은 후, 일정 시간 이후에 학습을 시작하도록 합니다.
@@ -22,8 +22,6 @@ OBSERVE = 100
 
 # action: 0: 매수, 1: 매각, 2: 유지
 NUM_ACTION = 3
-SCREEN_WIDTH = 6
-SCREEN_HEIGHT = 10
 
 
 def train():

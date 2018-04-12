@@ -96,8 +96,8 @@ class DQN:
         # 학습데이터로 현재의 상태만이 아닌, 과거의 상태까지 고려하여 계산하도록 하였고,
         # 이 모델에서는 과거 3번 + 현재 = 총 4번의 상태를 계산하도록 하였으며,
         # 새로운 상태가 들어왔을 때, 가장 오래된 상태를 제거하고 새로운 상태를 넣습니다.
-        next_state = np.reshape(state, (1, 39))
-        next_state = np.append(self.state[1:40, 1:], next_state, axis=1)
+        next_state = np.reshape(state, (1, 40))
+        # next_state = np.append(self.state[1:40], next_state, axis=1)
 
         # 플레이결과, 즉, 액션으로 얻어진 상태와 보상등을 메모리에 저장합니다.
         self.memory.append((self.state, next_state, action, reward, terminal))
