@@ -11,13 +11,13 @@ tf.app.flags.DEFINE_boolean("train", True, "학습모드. 게임을 화면에 �
 FLAGS = tf.app.flags.FLAGS
 
 # 최대 학습 횟수
-MAX_EPISODE = 1000 #500일
-# 1000번의 학습마다 한 번씩 타겟 네트웍을 업데이트합니다.
-TARGET_UPDATE_INTERVAL = 100
+MAX_EPISODE = 100
+# 100번의 학습마다 한 번씩 타겟 네트웍을 업데이트합니다.
+TARGET_UPDATE_INTERVAL = 10
 # 1 state마다 한 번씩 학습합니다.
 TRAIN_INTERVAL = 1
 # 학습 데이터를 어느정도 쌓은 후, 일정 시간 이후에 학습을 시작하도록 합니다.
-OBSERVE = 30
+OBSERVE = 10
 
 # action: 0: 매수, 1: 매각, 2: 유지
 NUM_ACTION = 3
@@ -41,7 +41,7 @@ def train():
 
     brain.update_target_network()
 
-    epsilon = 1.0
+    epsilon = 0.5
     time_step = 0
     total_reward_list = []
 
@@ -115,7 +115,7 @@ def replay():
 
             brain.remember(state, action, reward, terminal)
 
-            time.sleep(0.3)
+            time.sleep(0.1)
 
         print('게임횟수: %d 점수: %d' % (episode + 1, total_reward))
 

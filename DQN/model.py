@@ -24,7 +24,7 @@ class DQN:
         # 현재 게임판의 상태
         self.state = None
 
-        self.input_X = tf.placeholder(tf.float32, [None, 1, 40]) #state => 1 x 40
+        self.input_X = tf.placeholder(tf.float32, [None, 40, 1]) #state => 1 x 40
         self.input_A = tf.placeholder(tf.int64, [None])
         self.input_Y = tf.placeholder(tf.float32, [None])
 
@@ -37,11 +37,13 @@ class DQN:
 
         with tf.variable_scope(name):
             model = tf.layers.dense(self.input_X, 40, activation=tf.nn.relu)
-            model = tf.layers.dense(model, 80, activation=tf.nn.relu)
-            model = tf.layers.dense(model, 40, activation=tf.nn.relu)
+            model = tf.layers.dense(model, 80, activation=tf.nn.sigmoid)
+            model = tf.layers.dense(model, 256, activation=tf.nn.relu)
+            model = tf.layers.dense(model, 512, activation=tf.nn.sigmoid)
             model = tf.contrib.layers.flatten(model)
+            model = tf.layers.dense(model, 80, activation=tf.nn.relu)
 
-            Q = tf.layers.dense(model, self.n_action, activation=None)
+            Q = tf.layers.dense(model, self.n_action, activation=tf.nn.sigmoid)
 
         return Q
 
@@ -49,11 +51,10 @@ class DQN:
         one_hot = tf.one_hot(self.input_A, self.n_action, 1.0, 0.0)
         Q_value = tf.reduce_sum(tf.multiply(self.Q, one_hot), axis=1)
         cost = tf.reduce_mean(tf.square(self.input_Y - Q_value))
-        train_op = tf.train.AdamOptimizer(learning_rate=1e-6).minimize(cost)
+        train_op = tf.train.AdamOptimizer(1e-6).minimize(cost)
 
         return cost, train_op
 
-    # refer: https://github.com/hunkim/ReinforcementZeroToAll/
     def update_target_network(self):
         copy_op = []
 
@@ -70,6 +71,7 @@ class DQN:
                                    feed_dict={self.input_X: [self.state]})
 
         action = np.argmax(Q_value[0])
+        print("Q_value : " + str(Q_value[0]))
 
         return action
 
@@ -79,7 +81,7 @@ class DQN:
         self.state = np.stack(state, axis=1)
 
     def remember(self, state, action, reward, terminal):
-        next_state = np.reshape(state, (1, 40))
+        next_state = np.reshape(state, (40, 1))
 
         self.memory.append((self.state, next_state, action, reward, terminal))
 
@@ -112,6 +114,8 @@ class DQN:
                 Y.append(reward[i])
             else:
                 Y.append(reward[i] + self.GAMMA * np.max(target_Q_value[i]))
+
+        # print("X : " + str(state))
 
         self.session.run(self.train_op,
                          feed_dict={
