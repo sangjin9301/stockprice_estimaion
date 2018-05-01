@@ -19,7 +19,7 @@ TRAIN_INTERVAL = 1
 # 학습 데이터를 어느정도 쌓은 후, 일정 시간 이후에 학습을 시작하도록 합니다.
 OBSERVE = 10
 
-# action: 0: 매수, 1: 매각, 2: 유지
+# action: 0: 매수, 1: 매각
 NUM_ACTION = 3
 
 
@@ -41,7 +41,7 @@ def train():
 
     brain.update_target_network()
 
-    epsilon = 0.5
+    epsilon = 1
     time_step = 0
     total_reward_list = []
 
@@ -60,7 +60,7 @@ def train():
                 action = brain.get_action()
 
             if episode > OBSERVE:
-                epsilon -= 1 / 1000
+                epsilon -= 1 / 10000
 
             state, reward, terminal = game.step(action)
             total_reward += reward

@@ -16,6 +16,8 @@ class Game:
         self.index_i = 0
         self.current_reward = 0
         self.win_rate = 0
+        self.deposit_1 = 0
+        self.deposit_2 = 0
 
     def _read_file(self, filename):
         with open(filename, 'r', encoding='utf-8') as fd:
@@ -32,7 +34,7 @@ class Game:
 
     def reset(self):
         self.total_game += 1
-        self.money = 100000
+        self.money = 10000000
         self.index_i = 0
         self.win_rate = 0
         self.number_of_stock = 0
@@ -47,9 +49,9 @@ class Game:
         self.number_of_stock += quantity
 
     def _action_sell(self):
-        self.money += self.open_price*self.number_of_stock
-        self.money -= (self.open_price*self.number_of_stock * 0.0016)
-        self.number_of_stock = 0
+        self.deposit_2 = self.open_price*(self.number_of_stock/2)
+        self.money -= (self.open_price*(self.number_of_stock/2)* 0.0016) # 수수료
+        self.number_of_stock = self.number_of_stock/2
 
     def _is_game_over(self):
         if ((self.money + (self.number_of_stock * self.close_price)) < 0) | (self.index_i > 999):
@@ -59,26 +61,27 @@ class Game:
             return False
 
     def step(self, action):
+        self.money += self.deposit_1
+        self.deposit_1 = self.deposit_2
+        self.deposit_2 = 0
 
-        before = self.money + (self.number_of_stock * self.open_price)
+        before = self.money + (self.number_of_stock * self.open_price) + self.deposit_2 + self.deposit_1
         if action == 1:
             self._action_buy()
         elif action == 0:
             self._action_sell()
 
-        after = self.money + (self.number_of_stock * self.close_price)
+        after = self.money + (self.number_of_stock * self.close_price) + self.deposit_2 + self.deposit_1
         game_over = self._is_game_over()
 
+        reward = (after - before)
         if game_over:
             print("---over-----------------------------------------------------------------------------")
             print("Rate : "+str(self.win_rate/self.index_i))
-            reward = -100
             self.current_reward = (self.money+(self.close_price*self.number_of_stock))
 
         else:
             self.index_i += 1
-
-            reward = (after - before)
             if (action == 1) & (reward > 0):
                 self.win_rate += 1
             elif (action == 0) & (reward <0):
@@ -87,10 +90,10 @@ class Game:
             print("시가 : " + str(self.open_price))
             print("종가 : " + str(self.close_price))
             print("#stock : " + str(self.number_of_stock))
-            print("action : "+str(action))  # 1:매수, 0:매각, 2:non-Action
-            print("=수익 : " + str(reward))
-            print("=보유주가 : " + str(self.close_price*self.number_of_stock))
+            # print("action : "+str(action))  # 0:매각, 1:매수, 2:non-Action
+            # print("=수익 : " + str(reward))
+            # print("=보유주가 : " + str(self.close_price*self.number_of_stock))
             print("=자본 : " + str(self.money))
-            print("=자산 : " + str(self.money+(self.close_price*self.number_of_stock)))
+            print("=자산 : " + str(self.money+(self.close_price*self.number_of_stock)+self.deposit_2+self.deposit_1))
 
         return self._get_state(), reward, game_over
