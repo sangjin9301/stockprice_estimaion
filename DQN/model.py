@@ -11,10 +11,10 @@ class DQN:
     # 학습시 사용/계산할 상태값(정확히는 replay memory)의 갯수를 정합니다.
     BATCH_SIZE = 10
     # 과거의 상태에 대한 가중치를 줄이는 역할을 합니다.
-    GAMMA = 0.99
+    GAMMA = 0.9
     # 한 번에 볼 총 프레임 수 입니다.
     # 앞의 상태까지 고려하기 위함입니다.
-    STATE_LEN = 1
+    STATE_LEN = 5
 
     def __init__(self, session, n_action):
         self.session = session
@@ -24,7 +24,7 @@ class DQN:
         # 현재 게임판의 상태
         self.state = None
 
-        self.input_X = tf.placeholder(tf.float32, [None, 40, 1]) #state => 1 x 40
+        self.input_X = tf.placeholder(tf.float32, [None, 40, self.STATE_LEN]) #state => 1 x 40
         self.input_A = tf.placeholder(tf.int64, [None])
         self.input_Y = tf.placeholder(tf.float32, [None])
 
@@ -82,13 +82,14 @@ class DQN:
 
     def remember(self, state, action, reward, terminal):
         next_state = np.reshape(state, (40, 1))
+        next_state = np.append(self.state[:, 1:], next_state, axis=1)
 
         self.memory.append((self.state, next_state, action, reward, terminal))
 
+        self.state = next_state
         if len(self.memory) > self.REPLAY_MEMORY:
             self.memory.popleft()
 
-        self.state = next_state
 
     def _sample_memory(self):
         sample_memory = random.sample(self.memory, self.BATCH_SIZE)
@@ -115,7 +116,6 @@ class DQN:
             else:
                 Y.append(reward[i] + self.GAMMA * np.max(target_Q_value[i]))
 
-        # print("X : " + str(state))
 
         self.session.run(self.train_op,
                          feed_dict={

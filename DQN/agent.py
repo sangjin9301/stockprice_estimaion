@@ -3,16 +3,17 @@ import numpy as np
 import random
 import time
 
-from game import Game
-from model import DQN
+from DQN.game import Game
+from DQN.model import DQN
 
+from DQN.ExcelWriter import ExcelWriter
 
 tf.app.flags.DEFINE_boolean("train", True, "학습모드. 게임을 화면에 보여주지 않습니다.")
 FLAGS = tf.app.flags.FLAGS
 
 # 최대 학습 횟수
 MAX_EPISODE = 100
-# 100번의 학습마다 한 번씩 타겟 네트웍을 업데이트합니다.
+# 10번의 학습마다 한 번씩 타겟 네트웍을 업데이트합니다.
 TARGET_UPDATE_INTERVAL = 10
 # 1 state마다 한 번씩 학습합니다.
 TRAIN_INTERVAL = 1
@@ -23,12 +24,16 @@ OBSERVE = 10
 NUM_ACTION = 3
 
 
+
+
 def train():
     print('train')
     sess = tf.Session()
 
     game = Game()
     brain = DQN(sess, NUM_ACTION)
+    excel_riter = ExcelWriter()
+    excel_riter.generateFile()
 
     rewards = tf.placeholder(tf.float32, [None])
     tf.summary.scalar('avg.reward/ep.', tf.reduce_mean(rewards))
@@ -59,11 +64,11 @@ def train():
             else:
                 action = brain.get_action()
 
-            if episode > OBSERVE:
+            if (episode > OBSERVE) and (episode > 0.1):
                 epsilon -= 1 / 10000
 
-            state, reward, terminal = game.step(action)
-            total_reward += reward
+            state, reward, terminal, assets = game.step(action)
+            total_reward = assets - game.INIT_MONEY
 
             brain.remember(state, action, reward, terminal)
 
@@ -75,6 +80,7 @@ def train():
 
             time_step += 1
 
+        excel_riter.write_train_data(total_reward)
         print('게임횟수: %d 점수: %d' % (episode + 1, total_reward))
 
         total_reward_list.append(total_reward)
@@ -94,6 +100,7 @@ def replay():
 
     game = Game()
     brain = DQN(sess, NUM_ACTION)
+    excel_riter = ExcelWriter()
 
     saver = tf.train.Saver()
     ckpt = tf.train.get_checkpoint_state('model')
@@ -110,13 +117,13 @@ def replay():
         while not terminal:
             action = brain.get_action()
 
-            state, reward, terminal = game.step(action)
-            total_reward += reward
+            state, reward, terminal, assets = game.step(action)
+            total_reward = assets - game.INIT_MONEY
 
             brain.remember(state, action, reward, terminal)
 
             time.sleep(0.1)
-
+        excel_riter.write_evaluation_data(total_reward)
         print('게임횟수: %d 점수: %d' % (episode + 1, total_reward))
 
 
